@@ -9,7 +9,7 @@ services:
     depends_on:
       - redis
     environment:
-      - FLASK_ENV=development
+      - FLASK_ENV=production
       - MINIO_ACCESS_KEY=${ENV_MINIO_ACCESS_KEY}
       - MINIO_SECRET_KEY=${ENV_MINIO_SECRET_KEY}
       - MINIO_URL=${ENV_MINIO_URL}

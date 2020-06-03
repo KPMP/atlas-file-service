@@ -12,19 +12,11 @@ s3Bucket = os.environ.get('BUCKET_NAME')
 minioUrl = os.environ.get('MINIO_URL')
 minioClient = Minio(minioUrl, access_key=minioAccessKey, secret_key=minioSecretKey, secure=False)
 
-@app.route('/file/download/<objectName>')
+@app.route('/file/download/<objectName>', methods=['GET'])
 def downloadFile(objectName):
     try:
         object = minioClient.get_object(s3Bucket, objectName, request_headers=None)
         return send_file(object, as_attachment=True, attachment_filename=objectName)
-    except ResponseError as err:
-        print(err)
-        return err
-
-@app.route('/file/downloadpre/<objectName>')
-def downloadFilePre(objectName):        
-    try:
-        return redirect(minioClient.presigned_get_object(s3Bucket, objectName, expires=timedelta(days=2)))
     except ResponseError as err:
         print(err)
         return err
