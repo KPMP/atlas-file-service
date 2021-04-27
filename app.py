@@ -1,7 +1,7 @@
 from datetime import timedelta
 import os, sys, redis
 from minio import Minio
-from minio.error import (ResponseError, BucketAlreadyOwnedByYou, BucketAlreadyExists)
+from minio.error import (InvalidResponseError, BucketAlreadyOwnedByYou, BucketAlreadyExists)
 from flask import Flask, redirect, send_file
 
 app = Flask(__name__)
