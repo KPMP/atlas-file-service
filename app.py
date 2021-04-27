@@ -1,7 +1,7 @@
 from datetime import timedelta
 import os, sys, redis
 from minio import Minio
-from minio.error import (InvalidResponseError, BucketAlreadyOwnedByYou, BucketAlreadyExists)
+from minio.error import S3Error
 from flask import Flask, redirect, send_file
 
 app = Flask(__name__)
@@ -18,6 +18,6 @@ def downloadFile(packageId, objectName):
         objectNameFull = packageId + '/' + objectName
         object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
         return send_file(object, as_attachment=True, attachment_filename=objectName)
-    except ResponseError as err:
+    except S3Error as err:
         print(err)
         return err
