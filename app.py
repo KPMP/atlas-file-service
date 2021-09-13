@@ -21,3 +21,13 @@ def downloadFile(packageId, objectName):
     except S3Error as err:
         print(err)
         return err
+
+@app.route('/v1/derived/download/<packageId>/<objectName>', methods=['GET'])
+def downloadFile(packageId, objectName):
+    try:
+        objectNameFull = packageId + '/derived/' + objectName
+        object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
+        return send_file(object, as_attachment=True, attachment_filename=objectName)
+    except S3Error as err:
+        print(err)
+        return err
