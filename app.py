@@ -23,7 +23,7 @@ def downloadFile(packageId, objectName):
         return err
 
 @app.route('/v1/derived/download/<packageId>/<objectName>', methods=['GET'])
-def downloadFile(packageId, objectName):
+def downloadDerivedFile(packageId, objectName):
     try:
         objectNameFull = packageId + '/derived/' + objectName
         object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
