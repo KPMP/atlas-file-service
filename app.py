@@ -27,7 +27,7 @@ def downloadDerivedFile(packageId, objectName):
     try:
         objectNameFull = packageId + '/derived/' + objectName
         object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
-        return send_file(object, as_attachment=False, attachment_filename=objectName)
+        return send_file(object, as_attachment=False)
     except S3Error as err:
         print(err)
         return err
