@@ -5,4 +5,5 @@ ENV FLASK_RUN_HOST 0.0.0.0
 RUN apk add --no-cache gcc musl-dev linux-headers tzdata
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
+RUN pip3 install -U flask-cors
 CMD ["flask", "run"]

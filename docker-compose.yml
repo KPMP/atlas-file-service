@@ -1,7 +1,7 @@
 version: "3.5"
 services:
   atlas-file-service-web-2:
-    build: .
+    image: kingstonduo/atlas-file-service:test
     ports:
       - "5000:5000"
     volumes:
