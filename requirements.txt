@@ -1,3 +1,5 @@
 flask
 redis
 minio
+boto3
+flask-cors
