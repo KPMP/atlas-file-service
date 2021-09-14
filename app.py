@@ -41,7 +41,7 @@ def downloadDerivedFile(packageId, objectName):
         return err
 
 @app.route('/v1/derived/downloads3/<packageId>/<objectName>', methods=['GET'])
-def downloadDerivedFile(packageId, objectName):
+def downloadDerivedFileS3(packageId, objectName):
     try:
         objectNameFull = packageId + '/derived/' + objectName
         file = s3_client.get_object(Bucket=s3Bucket, Key=objectNameFull)
