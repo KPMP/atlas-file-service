@@ -26,7 +26,7 @@ def downloadFile(packageId, objectName):
     try:
         objectNameFull = packageId + '/' + objectName
         object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
-        return send_file(object, as_attachment=True, attachment_filename=objectName)
+        return send_file(object, as_attachment=True, download_name=objectName)
     except S3Error as err:
         print(err)
         return err
