@@ -5,6 +5,7 @@ import botocore.exceptions
 from minio.error import S3Error
 from flask import Flask, redirect, send_file, Response
 from flask_cors import CORS
+from lib.mysql_connection import MYSQLConnection
 
 app = Flask(__name__)
 CORS(app)
@@ -21,15 +22,29 @@ s3_client = boto3.client(
     aws_secret_access_key=minioSecretKey
 )
 
+db = MYSQLConnection()
+db.get_db_connection()
+
+
+def get_file_info_by_file_name(file_name):
+    return db.get_data(
+        "SELECT * FROM sv_repo_view WHERE file_name = %s",
+        (file_name,),
+    )
+
+
 @app.route('/v1/file/download/<packageId>/<objectName>', methods=['GET'])
 def downloadFile(packageId, objectName):
-    try:
-        objectNameFull = packageId + '/' + objectName
-        object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
-        return send_file(object, as_attachment=True, download_name=objectName)
-    except S3Error as err:
-        print(err)
-        return err
+    result = get_file_info_by_file_name(objectName)
+    if result[0]["access"] == "open":
+        try:
+            objectNameFull = packageId + '/' + objectName
+            object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
+            return send_file(object, as_attachment=True, download_name=objectName)
+        except S3Error as err:
+            print(err)
+            return err
+
 
 @app.route('/v1/derived/download/<packageId>/<objectName>', methods=['GET'])
 def downloadDerivedFileS3PS(packageId, objectName):
