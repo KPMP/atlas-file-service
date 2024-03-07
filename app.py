@@ -105,7 +105,7 @@ db.get_db_connection()
 
 def get_file_info_by_file_name(file_name):
     return db.get_data(
-        "SELECT * FROM sv_repo_view WHERE file_name = %s",
+        "SELECT * FROM repo_file_v WHERE file_name = %s",
         (file_name,),
     )
 
