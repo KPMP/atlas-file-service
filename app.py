@@ -40,7 +40,7 @@ class MYSQLConnection:
         try:
             self.host = os.environ.get("MYSQL_HOST")
             self.user = os.environ.get("MYSQL_USER")
-            self.password = os.environ.get("MYSQL_PWD")
+            self.password = os.environ.get("MYSQL_PASSWORD")
         except Exception as connectError:
             logger.warning(
                 "Can't load environment variables from docker... trying local .env file instead...", connectError
