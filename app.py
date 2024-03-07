@@ -38,9 +38,9 @@ class MYSQLConnection:
         self.database_name = "knowledge_environment"
 
         try:
-            self.host = os.environ["MYSQL_HOST"]
-            self.user = os.environ["MYSQL_USER"]
-            self.password = os.environ["MYSQL_PWD"]
+            self.host = os.environ.get("MYSQL_HOST")
+            self.user = os.environ.get("MYSQL_USER")
+            self.password = os.environ.get("MYSQL_PWD")
         except Exception as connectError:
             logger.warning(
                 "Can't load environment variables from docker... trying local .env file instead...", connectError
