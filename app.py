@@ -44,6 +44,8 @@ def downloadFile(packageId, objectName):
         except S3Error as err:
             print(err)
             return err
+    else:
+        return "File not found", 404
 
 
 @app.route('/v1/derived/download/<packageId>/<objectName>', methods=['GET'])
