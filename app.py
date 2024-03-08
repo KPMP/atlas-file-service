@@ -69,22 +69,6 @@ class MYSQLConnection:
             logger.error("Can't connect to MySQL", error)
             os.sys.exit()
 
-    def insert_data(self, sql, data):
-        try:
-            self.get_db_cursor()
-            self.cursor.execute(sql, data)
-            warning = self.cursor.fetchwarnings()
-            if warning is not None:
-                logger.warning(warning)
-
-        except Exception as error:
-            logger.error(f"Cannot insert with query: {sql}; and the data: {data}", error)
-        finally:
-            self.database.commit()
-            row_id = self.cursor.lastrowid
-            self.cursor.close()
-            return row_id
-
     def get_data(self, sql, query_data=None):
         try:
             self.get_db_cursor()
@@ -119,7 +103,7 @@ def downloadFile(packageId, objectName):
             object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
             return send_file(object, as_attachment=True, download_name=objectName)
         except S3Error as err:
-            print(err)
+            logger.error(err)
             return err
     else:
         return "File not found", 404
@@ -133,7 +117,7 @@ def downloadDerivedFileS3PS(packageId, objectName):
                                                 Params={'Bucket': s3Bucket, 'Key': objectNameFull},
                                                 ExpiresIn=3600)
     except botocore.exceptions.ClientError as error:
-        print(error)
+        logger.error(err)
     except botocore.exceptions.ParamValidationError as error:
-        print(error)
+        logger.error(err)
 
