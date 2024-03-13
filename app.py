@@ -57,8 +57,9 @@ class MYSQLConnection:
                 connect_try = connect_try + 1
                 self.get_db_connection()
                 return self.get_db_cursor(connect_try)
-            logger.error("Tried too many times to get mysql cursor. Exiting.", error)
-            os.sys.exit()
+            else:
+                logger.error("Tried too many times to get mysql cursor. Exiting.", error)
+                os.sys.exit()
 
     def get_db_connection(self):
         try:
