@@ -69,6 +69,7 @@ class MYSQLConnection:
                 port=self.port,
                 password=self.password,
                 database=self.database_name,
+                pool_name="atlas-file-service"
             )
             self.database.get_warnings = True
             return self.database
