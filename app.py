@@ -49,6 +49,8 @@ class MYSQLConnection:
 
     def get_db_cursor(self, connect_try=0):
         try:
+            if (self.database.is_connected() == False):
+                self.get_db_connection();
             self.cursor = self.database.cursor(buffered=False, dictionary=True)
             return self.cursor
         except Exception as error:
