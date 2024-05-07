@@ -4,7 +4,7 @@ on:
   push:
 
 jobs:
-  build-python-project:
+  build-project:
     env:
       IMAGE_TAG: 3.4
     runs-on: ubuntu-latest
