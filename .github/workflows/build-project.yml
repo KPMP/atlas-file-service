@@ -29,11 +29,11 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: kingstonduo/atlas-file-service:$IMAGE_TAG
+          tags: kingstonduo/atlas-file-service:${{ steps.branch-names.outputs.current_branch }}
       
       - name: Build and push to Docker Hub if branch is not develop
         if: steps.branch-names.outputs.current_branch != 'develop'
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: kingstonduo/atlas-file-service:${{ steps.branch-names.outputs.current_branch }}
+          tags: kingstonduo/atlas-file-service:${{ env.IMAGE_TAG }}
