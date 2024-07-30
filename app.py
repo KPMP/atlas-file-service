@@ -114,7 +114,7 @@ def downloadFile(packageId, objectName):
                     {
                         "name": "file_download",
                         "params": {
-                            "file_name": objectName
+                            "file_name": result[0]["file_name"]
                         }
                     }
                 ]
