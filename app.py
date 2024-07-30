@@ -119,7 +119,7 @@ def downloadFile(packageId, objectName):
                     }
                 ]
             }
-            requests.post(url, json.dumps(payload), verify=True)
+            requests.post(url, json=payload, verify=True)
             return send_file(object, as_attachment=True, download_name=objectName)
         except S3Error as err:
             logger.error(err)
