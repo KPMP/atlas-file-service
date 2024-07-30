@@ -7,6 +7,8 @@ from flask import Flask, redirect, send_file, Response
 from flask_cors import CORS
 import mysql.connector
 import logging
+import requests
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -15,6 +17,9 @@ minioAccessKey = os.environ.get('MINIO_ACCESS_KEY')
 minioSecretKey = os.environ.get('MINIO_SECRET_KEY')
 s3Bucket = os.environ.get('BUCKET_NAME')
 minioUrl = os.environ.get('MINIO_URL')
+apiSecret = os.environ.get("API_SECRET")
+ga4Id = os.environ.get("GA4_ID")
+url = "https://www.google-analytics.com/mp/collect?measurement_id=" + ga4Id + "&api_secret=" + apiSecret
 minioClient = Minio(minioUrl, access_key=minioAccessKey, secret_key=minioSecretKey, secure=False)
 s3_client = boto3.client(
     's3',
@@ -103,6 +108,18 @@ def downloadFile(packageId, objectName):
         try:
             objectNameFull = packageId + '/' + objectName
             object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
+            payload = {
+                "client_id": "XXXXXXXXXX.YYYYYYYYYY",
+                "events": [
+                    {
+                        "name": "file_download",
+                        "params": {
+                            "file_name": objectName
+                        }
+                    }
+                ]
+            }
+            requests.post(url, json.dumps(payload), verify=True)
             return send_file(object, as_attachment=True, download_name=objectName)
         except S3Error as err:
             logger.error(err)
