@@ -99,7 +99,9 @@ def get_file_info_by_file_name(file_name):
         "SELECT * FROM repo_file_v WHERE file_name = %s",
         (file_name,),
     )
+# /api/v1/file/download/46669edb-0e3e-4470-8834-e9ca30a50bc3/
 
+# 4a45bcae-3203-4319-b455-b28965b1587a_20240604_OpenAccessClinicalData.csv'
 
 @app.route('/v1/file/download/<packageId>/<objectName>', methods=['GET'])
 def downloadFile(packageId, objectName):
@@ -114,7 +116,7 @@ def downloadFile(packageId, objectName):
                     {
                         "name": "file_download",
                         "params": {
-                            "file_name": result[0]["file_name"]
+                            "file_name": result[0]["file_name"][:59]
                         }
                     }
                 ]
