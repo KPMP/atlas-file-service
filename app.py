@@ -33,7 +33,7 @@ logging.basicConfig(level=logging.ERROR)
 
 class MYSQLConnection:
     def __init__(self):
-        logger.debug(
+        logger.info(
             "Start: MYSQLConnection().__init__(), trying to load environment variables in docker"
         )
         self.host = None
@@ -99,11 +99,8 @@ def get_file_info_by_file_name(file_name):
         "SELECT * FROM repo_file_v WHERE file_name = %s",
         (file_name,),
     )
-# /api/v1/file/download/46669edb-0e3e-4470-8834-e9ca30a50bc3/
 
-# 4a45bcae-3203-4319-b455-b28965b1587a_20240604_OpenAccessClinicalData.csv'
-
-@app.route('/v1/file/download/<packageId>/<objectName>', methods=['GET'])
+@app.route('/v1/file/download/<packageId>/<objectName>', methods=['POST', 'GET'])
 def downloadFile(packageId, objectName):
     result = get_file_info_by_file_name(objectName)
     if result[0]["access"] == "open":
@@ -113,15 +110,14 @@ def downloadFile(packageId, objectName):
             payload = {
                 "client_id": "XXXXXXXXXX.YYYYYYYYYY",
                 "events": [
-                    {
-                        "name": "file_download",
-                        "params": {
-                            "file_name": objectName[59:]
-                        }
+                 {
+                    "name": "file_download",
+                    "params": {
+                        "file_name": objectName
                     }
-                ]
+                 }]
             }
-            requests.post(url, json=payload, headers={'content-type': 'application/json'}, verify=True)
+            requests.post(url, json=payload, headers={"Content-Type": "application/json"})
             return send_file(object, as_attachment=True, download_name=objectName)
         except S3Error as err:
             logger.error(err)
@@ -138,7 +134,7 @@ def downloadDerivedFileS3PS(packageId, objectName):
                                                 Params={'Bucket': s3Bucket, 'Key': objectNameFull},
                                                 ExpiresIn=3600)
     except botocore.exceptions.ClientError as error:
-        logger.error(err)
+        logger.error(error)
     except botocore.exceptions.ParamValidationError as error:
-        logger.error(err)
+        logger.error(error)
 
