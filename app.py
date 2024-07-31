@@ -7,6 +7,8 @@ from flask import Flask, redirect, send_file, Response
 from flask_cors import CORS
 import mysql.connector
 import logging
+import requests
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -15,6 +17,9 @@ minioAccessKey = os.environ.get('MINIO_ACCESS_KEY')
 minioSecretKey = os.environ.get('MINIO_SECRET_KEY')
 s3Bucket = os.environ.get('BUCKET_NAME')
 minioUrl = os.environ.get('MINIO_URL')
+apiSecret = os.environ.get("API_SECRET")
+ga4Id = os.environ.get("GA4_ID")
+url = "https://www.google-analytics.com/mp/collect?measurement_id=" + ga4Id + "&api_secret=" + apiSecret
 minioClient = Minio(minioUrl, access_key=minioAccessKey, secret_key=minioSecretKey, secure=False)
 s3_client = boto3.client(
     's3',
@@ -28,7 +33,7 @@ logging.basicConfig(level=logging.ERROR)
 
 class MYSQLConnection:
     def __init__(self):
-        logger.debug(
+        logger.info(
             "Start: MYSQLConnection().__init__(), trying to load environment variables in docker"
         )
         self.host = None
@@ -95,14 +100,24 @@ def get_file_info_by_file_name(file_name):
         (file_name,),
     )
 
-
-@app.route('/v1/file/download/<packageId>/<objectName>', methods=['GET'])
+@app.route('/v1/file/download/<packageId>/<objectName>', methods=['POST', 'GET'])
 def downloadFile(packageId, objectName):
     result = get_file_info_by_file_name(objectName)
     if result[0]["access"] == "open":
         try:
             objectNameFull = packageId + '/' + objectName
             object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
+            payload = {
+                "client_id": "XXXXXXXXXX.YYYYYYYYYY",
+                "events": [
+                 {
+                    "name": "file_download",
+                    "params": {
+                        "file_name": objectName
+                    }
+                 }]
+            }
+            requests.post(url, json=payload, headers={"Content-Type": "application/json"})
             return send_file(object, as_attachment=True, download_name=objectName)
         except S3Error as err:
             logger.error(err)
@@ -119,7 +134,7 @@ def downloadDerivedFileS3PS(packageId, objectName):
                                                 Params={'Bucket': s3Bucket, 'Key': objectNameFull},
                                                 ExpiresIn=3600)
     except botocore.exceptions.ClientError as error:
-        logger.error(err)
+        logger.error(error)
     except botocore.exceptions.ParamValidationError as error:
-        logger.error(err)
+        logger.error(error)
 
