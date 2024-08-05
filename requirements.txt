@@ -5,3 +5,4 @@ boto3
 flask-cors
 mysql-connector-python
 requests
+gunicorn
