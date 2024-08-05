@@ -111,9 +111,11 @@ def downloadFile(packageId, objectName):
                 "client_id": "XXXXXXXXXX.YYYYYYYYYY",
                 "events": [
                  {
-                    "name": "file_download",
+                    "name": "AtlasRepositoryDownload",
                     "params": {
-                        "file_name": objectName
+                        "event_category": "Repository",
+                        "event_action": "Download",
+                        "label": objectName
                     }
                  }]
             }
