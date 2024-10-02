@@ -31,6 +31,7 @@ s3_client = boto3.client(
 logger = logging.getLogger("atlas-file-service")
 logging.basicConfig(level=logging.ERROR)
 
+
 class MYSQLConnection:
     def __init__(self):
         logger.info(
@@ -51,15 +52,21 @@ class MYSQLConnection:
                 "Can't load environment variables from docker... trying local .env file instead...", connectError
             )
 
-    def get_db_cursor(self):
+    def get_db_cursor(self, connect_try=0):
         try:
             if (self.database.is_connected() == False):
                 self.get_db_connection();
             self.cursor = self.database.cursor(buffered=False, dictionary=True)
             return self.cursor
         except Exception as error:
-            logger.error("Can't get mysql cursor", error)
-            os.sys.exit()
+            if connect_try < 5:
+                logger.info("Can't get cursor. Trying to reconnect to the database.")
+                connect_try = connect_try + 1
+                self.get_db_connection()
+                return self.get_db_cursor(connect_try)
+            else:
+                logger.error("Tried too many times to get mysql cursor. Exiting.", error)
+                os.sys.exit()
 
     def get_db_connection(self):
         try:
@@ -69,6 +76,7 @@ class MYSQLConnection:
                 port=self.port,
                 password=self.password,
                 database=self.database_name,
+                pool_name="atlas-file-service"
             )
             self.database.get_warnings = True
             return self.database
@@ -139,4 +147,3 @@ def downloadDerivedFileS3PS(packageId, objectName):
         logger.error(error)
     except botocore.exceptions.ParamValidationError as error:
         logger.error(error)
-
