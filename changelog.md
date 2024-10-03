@@ -1,6 +1,6 @@
 # Changelog
 
-## Release 1.4 [unreleased]
+## Release 3.5 [unreleased]
 Brief summary of what's in this release:
 
 
@@ -12,3 +12,14 @@ Breaking changes include any database updates needed, if we need to edit any fil
 ### Non-breaking changes
 
 Just a place to keep track of things that have changed in the code that we may want to pay special attention to when smoke testing, etc.
+
+
+## Release 3.4 (10/3/2024)
+Brief summary of what's in this release:
+- GA download event added
+
+### Breaking changes
+None
+
+### Non-breaking changes
+None
