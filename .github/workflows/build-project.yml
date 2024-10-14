@@ -6,7 +6,7 @@ on:
 jobs:
   build-project:
     env:
-      IMAGE_TAG: 3.4
+      IMAGE_TAG: 3.5
     runs-on: ubuntu-latest
     steps:
       - name: Get branch names
