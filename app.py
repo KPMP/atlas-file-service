@@ -8,6 +8,7 @@ from flask_cors import CORS
 import mysql.connector
 import logging
 import requests
+from werkzeug.wsgi import FileWrapper
 import json
 
 app = Flask(__name__)
@@ -128,7 +129,15 @@ def downloadFile(packageId, objectName):
                  }]
             }
             requests.post(url, json=payload, headers={"Content-Type": "application/json"})
-            return send_file(object, as_attachment=True, download_name=objectName)
+            file_wrapper = FileWrapper(object)
+            headers = {
+                'Content-Disposition': 'attachment; filename="{}"'.format(objectName)
+            }
+            response = Response(file_wrapper,
+                                mimetype='application/octet-stream',
+                                direct_passthrough=True,
+                                headers=headers)
+            return response
         except S3Error as err:
             logger.error(err)
             return err
