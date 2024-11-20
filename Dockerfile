@@ -7,4 +7,4 @@ COPY app.py app.py
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 RUN pip3 install -U flask-cors
-CMD ["gunicorn", "-b", ":5000", "app:app"]
+CMD ["uwsgi", "--http-socket", "0.0.0.0:5000", "--socket-timeout", "600", "--processes", "4", "--threads", "2", "--wsgi-file", "app.py", "--callable", "app"]
