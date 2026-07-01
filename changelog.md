@@ -1,11 +1,22 @@
 # Changelog
 
+## Release 3.6
+Brief summary of what's in this release:
+- Updated Docker base image
+
+### Breaking changes
+None
+
+### Non-breaking changes
+None
+
 ## Release 3.5
 Brief summary of what's in this release:
 
 We've made a few changes to fix some timeout issues with large files:
 - Changed the WSGI server to uWSGI
 - Instead of using Flask's send_file, we're now using a FileWrapper and a content disposition of "application/octet-stream"
+
 
 ### Breaking changes
 None
