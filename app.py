@@ -5,11 +5,12 @@ import botocore.exceptions
 from minio.error import S3Error
 from flask import Flask, redirect, send_file, Response
 from flask_cors import CORS
-import mysql.connector
+from mysql.connector import pooling
 import logging
 import requests
 from werkzeug.wsgi import FileWrapper
 import json
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 CORS(app)
@@ -21,6 +22,29 @@ minioUrl = os.environ.get('MINIO_URL')
 apiSecret = os.environ.get("API_SECRET")
 ga4Id = os.environ.get("GA4_ID")
 url = "https://www.google-analytics.com/mp/collect?measurement_id=" + ga4Id + "&api_secret=" + apiSecret
+
+# Reuse one HTTP session (keep-alive) and send analytics off the request path
+http = requests.Session()
+executor = ThreadPoolExecutor(max_workers=4)
+
+
+def send_download_event(object_name):
+    payload = {
+        "client_id": "XXXXXXXXXX.YYYYYYYYYY",
+        "events": [
+            {
+                "name": "AtlasRepositoryDownload",
+                "params": {
+                    "event_category": "Repository",
+                    "event_action": "Download",
+                    "label": object_name
+                }
+            }]
+    }
+    try:
+        http.post(url, json=payload, timeout=5)
+    except requests.RequestException:
+        logger.warning("Failed to send GA4 download event", exc_info=True)
 minioClient = Minio(minioUrl, access_key=minioAccessKey, secret_key=minioSecretKey, secure=False)
 s3_client = boto3.client(
     's3',
@@ -34,102 +58,72 @@ logging.basicConfig(level=logging.ERROR)
 
 
 class MYSQLConnection:
-    def __init__(self):
-        logger.info(
-            "Start: MYSQLConnection().__init__(), trying to load environment variables in docker"
-        )
-        self.host = None
+
+    def __init__(self, pool_size=None):
+        logger.info("Start: MYSQLConnection().__init__(), creating connection pool")
+        self.host = os.environ.get("MYSQL_HOST")
         self.port = 3306
-        self.user = None
-        self.password = None
+        self.user = os.environ.get("MYSQL_USER")
+        self.password = os.environ.get("MYSQL_PASSWORD")
         self.database_name = "knowledge_environment"
+        self.pool_size = pool_size or int(os.environ.get("MYSQL_POOL_SIZE", 8))
+        self.pool = None
 
+    def init_pool(self):
         try:
-            self.host = os.environ.get("MYSQL_HOST")
-            self.user = os.environ.get("MYSQL_USER")
-            self.password = os.environ.get("MYSQL_PASSWORD")
-        except Exception as connectError:
-            logger.warning(
-                "Can't load environment variables from docker... trying local .env file instead...", connectError
-            )
-
-    def get_db_cursor(self, connect_try=0):
-        try:
-            if (self.database.is_connected() == False):
-                self.get_db_connection();
-            self.cursor = self.database.cursor(buffered=False, dictionary=True)
-            return self.cursor
-        except Exception as error:
-            if connect_try < 5:
-                logger.info("Can't get cursor. Trying to reconnect to the database.")
-                connect_try = connect_try + 1
-                self.get_db_connection()
-                return self.get_db_cursor(connect_try)
-            else:
-                logger.error("Tried too many times to get mysql cursor. Exiting.", error)
-                os.sys.exit()
-
-    def get_db_connection(self):
-        try:
-            self.database = mysql.connector.connect(
+            self.pool = pooling.MySQLConnectionPool(
+                pool_name="atlas-file-service",
+                pool_size=self.pool_size,
+                autocommit=True,
+                pool_reset_session=False,
                 host=self.host,
-                user=self.user,
                 port=self.port,
+                user=self.user,
                 password=self.password,
                 database=self.database_name,
-                pool_name="atlas-file-service"
             )
-            self.database.get_warnings = True
-            return self.database
-        except Exception as error:
-            logger.error("Can't connect to MySQL", error)
-            os.sys.exit()
+            return self.pool
+        except Exception:
+            logger.exception("Can't create MySQL connection pool")
+            sys.exit(1)
 
     def get_data(self, sql, query_data=None):
+        connection = None
+        cursor = None
         try:
-            self.get_db_cursor()
-            data = []
-            self.cursor.execute(sql, query_data)
-            for row in self.cursor:
-                data.append(row)
-            return data
-        except Exception as error:
-            logger.error("Can't get knowledge_environment data.", error)
+            connection = self.pool.get_connection()
+            cursor = connection.cursor(buffered=False, dictionary=True)
+            cursor.execute(sql, query_data)
+            return cursor.fetchall()
+        except Exception:
+            logger.exception("Can't get knowledge_environment data.")
+            return None
         finally:
-            self.cursor.close()
+            if cursor is not None:
+                cursor.close()
+            if connection is not None:
+                connection.close()
 
 
 db = MYSQLConnection()
-db.get_db_connection()
+db.init_pool()
 
 
 def get_file_info_by_file_name(file_name):
     return db.get_data(
-        "SELECT * FROM repo_file_v WHERE file_name = %s",
+        "SELECT access FROM repo_file_v WHERE file_name = %s LIMIT 1",
         (file_name,),
     )
 
 @app.route('/v1/file/download/<packageId>/<objectName>', methods=['POST', 'GET'])
 def downloadFile(packageId, objectName):
     result = get_file_info_by_file_name(objectName)
-    if result[0]["access"] == "open":
+    if result and result[0]["access"] == "open":
         try:
             objectNameFull = packageId + '/' + objectName
             object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
-            payload = {
-                "client_id": "XXXXXXXXXX.YYYYYYYYYY",
-                "events": [
-                 {
-                    "name": "AtlasRepositoryDownload",
-                    "params": {
-                        "event_category": "Repository",
-                        "event_action": "Download",
-                        "label": objectName
-                    }
-                 }]
-            }
-            requests.post(url, json=payload, headers={"Content-Type": "application/json"})
-            file_wrapper = FileWrapper(object)
+            executor.submit(send_download_event, objectName)
+            file_wrapper = FileWrapper(object, 1024 * 1024)  # 1 MB blocks instead of the 8 KB default
             headers = {
                 'Content-Disposition': 'attachment; filename="{}"'.format(objectName)
             }
@@ -137,6 +131,7 @@ def downloadFile(packageId, objectName):
                                 mimetype='application/octet-stream',
                                 direct_passthrough=True,
                                 headers=headers)
+            response.call_on_close(lambda: (object.close(), object.release_conn()))
             return response
         except S3Error as err:
             logger.error(err)
