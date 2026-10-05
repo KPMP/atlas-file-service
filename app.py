@@ -122,7 +122,7 @@ def downloadFile(packageId, objectName):
             objectNameFull = packageId + '/' + objectName
             object = minioClient.get_object(s3Bucket, objectNameFull, request_headers=None)
             executor.submit(send_download_event, objectName)
-            file_wrapper = FileWrapper(object, 1024 * 1024)  # 1 MB blocks instead of the 8 KB default
+            file_wrapper = FileWrapper(object, 1024 * 1024)
             headers = {
                 'Content-Disposition': 'attachment; filename="{}"'.format(objectName)
             }
