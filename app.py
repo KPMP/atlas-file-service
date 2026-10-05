@@ -65,7 +65,7 @@ class MYSQLConnection:
         self.user = os.environ.get("MYSQL_USER")
         self.password = os.environ.get("MYSQL_PASSWORD")
         self.database_name = "knowledge_environment"
-        self.pool_size = pool_size or int(os.environ.get("MYSQL_POOL_SIZE", 8))
+        self.pool_size = pool_size or int(os.environ.get("MYSQL_POOL_SIZE", 2))
         self.pool = None
 
     def init_pool(self):
