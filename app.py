@@ -23,7 +23,6 @@ apiSecret = os.environ.get("API_SECRET")
 ga4Id = os.environ.get("GA4_ID")
 url = "https://www.google-analytics.com/mp/collect?measurement_id=" + ga4Id + "&api_secret=" + apiSecret
 
-# Reuse one HTTP session (keep-alive) and send analytics off the request path
 http = requests.Session()
 executor = ThreadPoolExecutor(max_workers=4)
 
