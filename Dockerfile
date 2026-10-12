@@ -7,4 +7,7 @@ COPY app.py app.py
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 RUN pip3 install -U flask-cors
-CMD ["uwsgi", "--http-socket", "0.0.0.0:5000", "--socket-timeout", "600", "--processes", "4", "--threads", "2", "--wsgi-file", "app.py", "--callable", "app"]
+CMD ["uwsgi", "--http-socket", "0.0.0.0:5000", "--socket-timeout", "600", \
+     "--master", "--lazy-apps", "--enable-threads", "--die-on-term", \
+     "--processes", "4", "--threads", "8", \
+     "--wsgi-file", "app.py", "--callable", "app"]
